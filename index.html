@@ -1,472 +1,284 @@
+
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xhub-admin — Top Navbar Studio</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            ytDark: '#0f0f0f',
-            ytDarkSec: '#1f1f1f',
-            ytDarkHover: '#2e2e2e',
-            ytRed: '#ff0000',
-          }
-        }
-      }
-    }
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>X Hub Admin Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101116;color:white;font-family:Arial,sans-serif}
+header{background:#191b23;padding:17px;display:flex;justify-content:space-between;align-items:center}
+header h2{margin:0;color:#ff3155}
+button{background:#ff3155;color:white;border:0;padding:11px 15px;border-radius:7px;cursor:pointer;margin:4px}
+button:disabled{opacity:.5}
+input{width:100%;padding:13px;margin:8px 0;background:#222530;color:white;border:1px solid #444;border-radius:7px}
+#login{max-width:380px;margin:70px auto;padding:20px;background:#191b23;border-radius:12px}
+#app{display:none}
+nav{display:flex;gap:6px;overflow-x:auto;padding:12px;background:#191b23}
+nav button{white-space:nowrap;background:#30333e}
+nav button.active{background:#ff3155}
+main{padding:15px;max-width:1100px;margin:auto}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card,.panel{background:#1b1e27;padding:17px;border-radius:10px;margin-bottom:12px}
+.card strong{display:block;font-size:25px;margin-top:10px}
+.item{background:#20232d;padding:13px;border-radius:8px;margin:9px 0;overflow-wrap:anywhere}
+.small{color:#aaa;font-size:13px}
+.danger{background:#b52238}
+.green{background:#16834c}
+#message{padding:10px;color:#ffca70;white-space:pre-wrap}
+@media(min-width:700px){.cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
 </head>
-<body class="bg-ytDark text-gray-100 font-sans antialiased selection:bg-red-600 selection:text-white min-h-screen flex flex-col">
+<body>
 
-  <!-- ADMIN LOCK SCREEN -->
-  <div id="admin-lock-screen" class="fixed inset-0 z-50 bg-ytDark flex items-center justify-center p-4">
-    <div class="w-full max-w-sm bg-ytDarkSec border border-zinc-800 rounded-2xl p-6 shadow-2xl text-center">
-      <div class="w-12 h-12 rounded-full bg-ytRed/15 text-ytRed flex items-center justify-center mx-auto mb-3 text-xl">
-        <i class="fa-solid fa-shield-halved"></i>
-      </div>
-      <h1 class="text-xl font-extrabold tracking-tight text-white">xhub-admin<span class="text-ytRed">.</span></h1>
-      <p class="text-xs text-gray-400 mt-1 mb-5">Enter passcode for Top Navbar Studio</p>
-      <input id="admin-passcode" type="password" placeholder="Admin Passcode" onkeydown="if(event.key==='Enter') verifyAdmin()" class="w-full px-3.5 py-2.5 mb-3 rounded-xl bg-zinc-900 border border-zinc-700 text-sm text-white focus:outline-none focus:border-ytRed text-center tracking-widest" />
-      <button onclick="verifyAdmin()" class="w-full py-2.5 rounded-xl bg-ytRed hover:bg-red-700 text-white text-xs font-semibold transition-colors">
-        Unlock Panel
-      </button>
-      <p id="lock-error" class="text-xs text-red-500 mt-2.5 hidden">Incorrect passcode!</p>
-    </div>
-  </div>
+<header>
+<h2>X HUB ADMIN</h2>
+<button onclick="logout()">Logout</button>
+</header>
 
-  <!-- MAIN ADMIN WORKSPACE (HIDDEN UNTIL AUTH) -->
-  <div id="admin-workspace" class="hidden flex-1 flex flex-col">
-    
-    <!-- HORIZONTAL TOP NAVBAR -->
-    <header class="bg-ytDarkSec border-b border-zinc-800 sticky top-0 z-40 px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-        <div class="flex items-center gap-2">
-          <span class="text-lg font-extrabold tracking-tight text-white">xhub-admin<span class="text-ytRed">.</span></span>
-          <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-ytRed/20 text-ytRed">Top Nav</span>
-        </div>
-        <!-- Mobile Logout / Site link -->
-        <div class="flex items-center gap-2 sm:hidden">
-          <a href="index.html" class="p-2 rounded-xl bg-zinc-800 text-gray-300 text-xs"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
-          <button onclick="logoutAdmin()" class="p-2 rounded-xl bg-red-950/50 text-red-400 text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>
-        </div>
-      </div>
+<div id="login">
+<h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Password">
+<button style="width:100%" onclick="login()">Login</button>
+<div id="loginMsg"></div>
+</div>
 
-      <!-- Horizontal Tabs -->
-      <nav class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-        <button onclick="switchAdminTab('overview')" data-tab="overview" class="admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-ytRed text-white shrink-0">
-          <i class="fa-solid fa-chart-pie"></i> Overview
-        </button>
-        <button onclick="switchAdminTab('videos')" data-tab="videos" class="admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
-          <i class="fa-solid fa-video"></i> Videos
-        </button>
-        <button onclick="switchAdminTab('users')" data-tab="users" class="admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
-          <i class="fa-solid fa-users"></i> Channels
-        </button>
-        <button onclick="switchAdminTab('earning')" data-tab="earning" class="admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
-          <i class="fa-solid fa-indian-rupee-sign"></i> Ads & Earning
-        </button>
-        <button onclick="switchAdminTab('settings')" data-tab="settings" class="admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
-          <i class="fa-solid fa-bullhorn"></i> Notice
-        </button>
-      </nav>
+<div id="app">
+<nav>
+<button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+<button onclick="showPage('users',this)">Users</button>
+<button onclick="showPage('creators',this)">Creators</button>
+<button onclick="showPage('videos',this)">Videos</button>
+<button onclick="showPage('reports',this)">Reports</button>
+<button onclick="showPage('subscribers',this)">Subscribers</button>
+</nav>
 
-      <!-- Right Action Utilities -->
-      <div class="hidden sm:flex items-center gap-2">
-        <button onclick="refreshAllData()" title="Refresh Data" class="p-2 rounded-xl bg-zinc-900 hover:bg-ytDarkHover border border-zinc-700 text-gray-300 text-xs">
-          <i class="fa-solid fa-rotate-right"></i>
-        </button>
-        <a href="index.html" class="px-3 py-2 rounded-xl bg-zinc-900 hover:bg-ytDarkHover border border-zinc-700 text-xs text-gray-300 hover:text-white flex items-center gap-1.5">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> Xhub Site
-        </a>
-        <button onclick="logoutAdmin()" class="px-3 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-xs text-red-400 flex items-center gap-1.5">
-          <i class="fa-solid fa-right-from-bracket"></i> Lock
-        </button>
-      </div>
-    </header>
+<main>
+<div id="message"></div>
 
-    <!-- MAIN CONTENT AREA (Maximizing Vertical Screen Space) -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-      
-      <!-- Section Header -->
-      <div class="flex items-center justify-between mb-5">
-        <h2 id="page-heading" class="text-base sm:text-lg font-bold text-white">Dashboard Overview</h2>
-        <button onclick="refreshAllData()" class="sm:hidden px-3 py-1.5 rounded-xl bg-ytDarkSec border border-zinc-700 text-xs font-semibold flex items-center gap-1.5">
-          <i class="fa-solid fa-rotate-right"></i> Refresh
-        </button>
-      </div>
+<section id="dashboard">
+<h2>Dashboard Statistics</h2>
+<div class="cards">
+<div class="card">Total Users<strong id="totalUsers">0</strong></div>
+<div class="card">Total Videos<strong id="totalVideos">0</strong></div>
+<div class="card">Creators<strong id="totalCreators">0</strong></div>
+<div class="card">Subscribers<strong id="totalSubs">0</strong></div>
+</div>
+<button onclick="refreshAll()">Refresh Dashboard</button>
+</section>
 
-      <!-- 1. OVERVIEW TAB -->
-      <section id="sec-overview" class="admin-section space-y-6">
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
-            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
-              <span>Total Videos</span>
-              <i class="fa-solid fa-film text-ytRed"></i>
-            </div>
-            <p id="stat-videos" class="text-2xl font-extrabold text-white">0</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
-            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
-              <span>Total Channels</span>
-              <i class="fa-solid fa-user-check text-emerald-400"></i>
-            </div>
-            <p id="stat-users" class="text-2xl font-extrabold text-white">0</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
-            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
-              <span>Total Views</span>
-              <i class="fa-solid fa-eye text-blue-400"></i>
-            </div>
-            <p id="stat-views" class="text-2xl font-extrabold text-white">0</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
-            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
-              <span>Subscriptions</span>
-              <i class="fa-solid fa-bell text-amber-400"></i>
-            </div>
-            <p id="stat-subs" class="text-2xl font-extrabold text-white">0</p>
-          </div>
-        </div>
+<section id="users" hidden>
+<h2>User List</h2>
+<div id="userList"></div>
+</section>
 
-        <!-- Recent Uploads Table -->
-        <div class="bg-ytDarkSec border border-zinc-800 rounded-2xl p-4">
-          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Latest Uploaded Videos (Quick View)</h3>
-          <div id="overview-recent-videos" class="divide-y divide-zinc-800 text-xs"></div>
-        </div>
-      </section>
+<section id="creators" hidden>
+<h2>Creator List</h2>
+<div id="creatorList"></div>
+</section>
 
-      <!-- 2. VIDEOS MANAGEMENT TAB (DENSE TABLE) -->
-      <section id="sec-videos" class="admin-section hidden space-y-4">
-        <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
-          <input id="admin-video-search" oninput="filterAdminVideos()" type="text" placeholder="Search by video title or channel name..." class="w-full sm:w-96 px-3.5 py-2 rounded-xl bg-ytDarkSec border border-zinc-700 text-xs text-white focus:outline-none focus:border-ytRed" />
-          <span id="video-count-badge" class="text-xs text-gray-400">Showing all videos</span>
-        </div>
+<section id="videos" hidden>
+<h2>Video Management</h2>
+<div id="videoList"></div>
+</section>
 
-        <div class="bg-ytDarkSec border border-zinc-800 rounded-2xl overflow-x-auto shadow-xl">
-          <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
-            <thead>
-              <tr class="border-b border-zinc-800 text-gray-400 bg-zinc-900/40">
-                <th class="p-3.5">Video Title</th>
-                <th class="p-3.5">Channel</th>
-                <th class="p-3.5">Views</th>
-                <th class="p-3.5">Likes</th>
-                <th class="p-3.5">Uploaded Date</th>
-                <th class="p-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admin-videos-tbody" class="divide-y divide-zinc-800"></tbody>
-          </table>
-        </div>
-      </section>
+<section id="reports" hidden>
+<h2>Video Reports</h2>
+<div id="reportList"></div>
+</section>
 
-      <!-- 3. CHANNELS & USERS TAB -->
-      <section id="sec-users" class="admin-section hidden space-y-4">
-        <div class="bg-ytDarkSec border border-zinc-800 rounded-2xl overflow-x-auto shadow-xl">
-          <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
-            <thead>
-              <tr class="border-b border-zinc-800 text-gray-400 bg-zinc-900/40">
-                <th class="p-3.5">Channel Name</th>
-                <th class="p-3.5">Username</th>
-                <th class="p-3.5">User ID (UUID)</th>
-                <th class="p-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admin-users-tbody" class="divide-y divide-zinc-800"></tbody>
-          </table>
-        </div>
-      </section>
+<section id="subscribers" hidden>
+<h2>Subscribers</h2>
+<div id="subscriberList"></div>
+</section>
+</main>
+</div>
 
-      <!-- 4. ADS & EARNING TAB -->
-      <section id="sec-earning" class="admin-section hidden space-y-6 max-w-3xl">
-        <div class="p-5 rounded-2xl bg-ytDarkSec border border-zinc-800 space-y-4 shadow-xl">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-white">Banner Ad Manager</h3>
-              <p class="text-xs text-gray-400">Configure sponsor banners across Xhub pages.</p>
-            </div>
-            <label class="flex items-center gap-2 text-xs cursor-pointer">
-              <input id="ad-active-toggle" type="checkbox" class="accent-ytRed w-4 h-4" />
-              <span class="font-semibold text-emerald-400">Enable Ads</span>
-            </label>
-          </div>
+<script>
+const SUPABASE_URL = "https://scczyiossqleuzidplxx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rvecUf_3ZkeAxnbAJ8iiiw_2mItGPT2";
 
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Sponsor / Campaign Title</label>
-              <input id="ad-title" type="text" placeholder="e.g., Summer Special Promo" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Banner Image URL</label>
-              <input id="ad-image-url" type="text" placeholder="https://images.unsplash.com/..." class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
-            </div>
-            <div>
-              <label class="block text-xs text-gray-400 mb-1">Redirect Target Link</label>
-              <input id="ad-target-url" type="text" placeholder="https://sponsor.com" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
-            </div>
-          </div>
+const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser = null;
 
-          <button onclick="saveAdConfig()" class="px-5 py-2 rounded-xl bg-ytRed hover:bg-red-700 text-white text-xs font-semibold">
-            Save Ad Settings
-          </button>
-        </div>
-      </section>
+const $ = id => document.getElementById(id);
 
-      <!-- 5. ANNOUNCEMENTS TAB -->
-      <section id="sec-settings" class="admin-section hidden space-y-6 max-w-3xl">
-        <div class="p-5 rounded-2xl bg-ytDarkSec border border-zinc-800 space-y-4 shadow-xl">
-          <h3 class="text-sm font-bold text-white">Global Announcement Notice</h3>
-          <p class="text-xs text-gray-400">Display a broadcast ticker message at the top of Xhub for all users.</p>
-          <input id="notice-text" type="text" placeholder="e.g., Welcome to Xhub! New features live now." class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
-          <div class="flex items-center justify-between pt-2">
-            <label class="flex items-center gap-2 text-xs cursor-pointer">
-              <input id="notice-active" type="checkbox" class="accent-ytRed w-4 h-4" />
-              <span>Show Notice Banner</span>
-            </label>
-            <button onclick="saveSiteSettings()" class="px-5 py-2 rounded-xl bg-ytRed hover:bg-red-700 text-white text-xs font-semibold">
-              Publish Notice
-            </button>
-          </div>
-        </div>
-      </section>
+function safe(value){
+ return String(value ?? "").replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
 
-    </main>
-  </div>
+function message(text){
+ $("message").textContent = text;
+}
 
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-zinc-900 border border-zinc-700 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold"></div>
+async function login(){
+ $("loginMsg").textContent="Checking login...";
+ const email=$("email").value.trim();
+ const password=$("password").value;
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://scczyiossqleuzidplxx.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_rvecUf_3ZkeAxnbAJ8iiiw_2mItGPT2";
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){
+  $("loginMsg").textContent=error.message;
+  return;
+ }
+ currentUser=data.user;
+ await checkAdmin();
+}
 
-    const ADMIN_PASSCODE = "xhub2026";
-    let allVideosCache = [];
-    let allProfilesMap = {};
+async function checkAdmin(){
+ const {data,error}=await sb
+  .from("admin_users")
+  .select("user_id")
+  .eq("user_id",currentUser.id)
+  .maybeSingle();
 
-    function verifyAdmin() {
-      const input = document.getElementById('admin-passcode').value;
-      const err = document.getElementById('lock-error');
-      if (input === ADMIN_PASSCODE) {
-        sessionStorage.setItem('xhub_admin_auth', 'true');
-        document.getElementById('admin-lock-screen').classList.add('hidden');
-        document.getElementById('admin-workspace').classList.remove('hidden');
-        err.classList.add('hidden');
-        refreshAllData();
-      } else {
-        err.classList.remove('hidden');
-      }
-    }
+ if(error || !data){
+  await sb.auth.signOut();
+  currentUser=null;
+  $("loginMsg").textContent="You are not an authorized admin.";
+  return;
+ }
 
-    function logoutAdmin() {
-      sessionStorage.removeItem('xhub_admin_auth');
-      location.reload();
-    }
+ $("login").style.display="none";
+ $("app").style.display="block";
+ message("Admin login successful.");
+ refreshAll();
+}
 
-    function switchAdminTab(tab) {
-      document.querySelectorAll('.admin-nav-btn').forEach(btn => {
-        const active = btn.getAttribute('data-tab') === tab;
-        btn.className = active
-          ? 'admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-ytRed text-white shrink-0'
-          : 'admin-nav-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0';
-      });
+async function logout(){
+ await sb.auth.signOut();
+ currentUser=null;
+ $("app").style.display="none";
+ $("login").style.display="block";
+ $("password").value="";
+}
 
-      document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
-      document.getElementById(`sec-${tab}`).classList.remove('hidden');
+function showPage(page,btn){
+ document.querySelectorAll("main section").forEach(s=>s.hidden=true);
+ $(page).hidden=false;
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
 
-      const titles = {
-        overview: 'Dashboard Overview',
-        videos: 'All Uploaded Videos (Dense Table)',
-        users: 'Registered Channels & Users',
-        earning: 'Ads & Direct Monetization',
-        settings: 'Global Site Announcements'
-      };
-      document.getElementById('page-heading').textContent = titles[tab] || 'Admin';
-    }
+ if(page==="users") loadUsers();
+ if(page==="creators") loadCreators();
+ if(page==="videos") loadVideos();
+ if(page==="reports") loadReports();
+ if(page==="subscribers") loadSubscribers();
+}
 
-    async function refreshAllData() {
-      showToast('Syncing with Supabase...');
-      const [{ data: profiles }, { data: videos }, { count: subCount }] = await Promise.all([
-        sb.from('profiles').select('*'),
-        sb.from('videos').select('*').order('created_at', { ascending: false }),
-        sb.from('subscriptions').select('*', { count: 'exact', head: true })
-      ]);
+async function countRows(table){
+ const {count,error}=await sb.from(table).select("*",{count:"exact",head:true});
+ if(error) throw error;
+ return count||0;
+}
 
-      allProfilesMap = {};
-      (profiles || []).forEach(p => { allProfilesMap[p.user_id] = p; });
-      allVideosCache = videos || [];
+async function refreshAll(){
+ try{
+  const [users,videos,creators,subs]=await Promise.all([
+   countRows("profiles"),
+   countRows("videos"),
+   countRows("profiles"),
+   countRows("subscriptions")
+  ]);
+  $("totalUsers").textContent=users;
+  $("totalVideos").textContent=videos;
+  $("totalCreators").textContent=creators;
+  $("totalSubs").textContent=subs;
+  message("Dashboard updated.");
+ }catch(e){
+  message("Dashboard error: "+e.message);
+ }
+}
 
-      const totalViews = allVideosCache.reduce((sum, v) => sum + (v.views || 0), 0);
-      document.getElementById('stat-videos').textContent = allVideosCache.length;
-      document.getElementById('stat-users').textContent = (profiles || []).length;
-      document.getElementById('stat-views').textContent = totalViews;
-      document.getElementById('stat-subs').textContent = subCount || 0;
+async function loadUsers(){
+ $("userList").textContent="Loading...";
+ const {data,error}=await sb.from("profiles").select("*").limit(200);
+ if(error){$("userList").textContent=error.message;return;}
+ $("userList").innerHTML=(data||[]).map(u=>`
+ <div class="item">
+ <b>${safe(u.username||u.name||"User")}</b>
+ <div class="small">User ID: ${safe(u.user_id||u.id)}</div>
+ </div>`).join("") || "No users found.";
+}
 
-      renderOverviewRecent();
-      renderVideosTable(allVideosCache);
-      renderUsersTable(profiles || []);
-      loadSavedConfigs();
-      showToast('Data synced successfully!');
-    }
+async function loadCreators(){
+ $("creatorList").textContent="Loading...";
+ const {data,error}=await sb.from("profiles").select("*").limit(200);
+ if(error){$("creatorList").textContent=error.message;return;}
+ $("creatorList").innerHTML=(data||[]).map(u=>`
+ <div class="item">
+ <b>${safe(u.username||u.name||"Creator")}</b>
+ <div class="small">User ID: ${safe(u.user_id||u.id)}</div>
+ </div>`).join("") || "No creators found.";
+}
 
-    function renderOverviewRecent() {
-      const box = document.getElementById('overview-recent-videos');
-      if (allVideosCache.length === 0) {
-        box.innerHTML = `<p class="py-3 text-gray-400">No videos uploaded yet.</p>`;
-        return;
-      }
-      box.innerHTML = allVideosCache.slice(0, 5).map(v => {
-        const ch = allProfilesMap[v.user_id]?.channel_name || 'Creator';
-        return `
-          <div class="py-2 flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <p class="font-semibold text-white truncate">${v.title}</p>
-              <p class="text-gray-400 text-[11px]">${ch} • ${v.views || 0} views</p>
-            </div>
-            <button onclick="adminDeleteVideo('${v.id}', '${v.file_path}')" class="px-2.5 py-1 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-[11px] font-semibold shrink-0">
-              Delete
-            </button>
-          </div>
-        `;
-      }).join('');
-    }
+async function loadVideos(){
+ $("videoList").textContent="Loading...";
+ const {data,error}=await sb.from("videos").select("*").order("id",{ascending:false}).limit(200);
+ if(error){$("videoList").textContent=error.message;return;}
+ $("videoList").innerHTML=(data||[]).map(v=>`
+ <div class="item">
+ <b>${safe(v.title||"Untitled Video")}</b>
+ <div class="small">Video ID: ${safe(v.id)}</div>
+ <div class="small">Views: ${safe(v.views??0)}</div>
+ <button class="danger" onclick="deleteVideo('${safe(v.id)}')">Delete Video</button>
+ </div>`).join("") || "No videos found.";
+}
 
-    function renderVideosTable(list) {
-      const tbody = document.getElementById('admin-videos-tbody');
-      document.getElementById('video-count-badge').textContent = `Showing ${list.length} videos`;
-      if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No videos found.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = list.map(v => {
-        const prof = allProfilesMap[v.user_id];
-        const chName = prof?.channel_name || 'Creator';
-        const dateStr = new Date(v.created_at).toLocaleDateString();
-        return `
-          <tr class="hover:bg-zinc-900/60 transition-colors">
-            <td class="p-3.5 font-semibold text-white max-w-xs truncate">${v.title}</td>
-            <td class="p-3.5 text-gray-300">${chName}</td>
-            <td class="p-3.5 text-gray-300">${v.views || 0}</td>
-            <td class="p-3.5 text-gray-300">${v.likes || 0}</td>
-            <td class="p-3.5 text-gray-400">${dateStr}</td>
-            <td class="p-3.5 text-right">
-              <button onclick="adminDeleteVideo('${v.id}', '${v.file_path}')" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold">
-                <i class="fa-solid fa-trash mr-1"></i> Delete
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
+async function deleteVideo(id){
+ if(!confirm("Are you sure you want to delete this video record?"))return;
+ const {error}=await sb.from("videos").delete().eq("id",id);
+ if(error){message("Delete failed: "+error.message);return;}
+ message("Video record deleted.");
+ loadVideos();
+ refreshAll();
+}
 
-    function filterAdminVideos() {
-      const q = document.getElementById('admin-video-search').value.toLowerCase();
-      const filtered = allVideosCache.filter(v => {
-        const ch = (allProfilesMap[v.user_id]?.channel_name || '').toLowerCase();
-        return v.title.toLowerCase().includes(q) || ch.includes(q);
-      });
-      renderVideosTable(filtered);
-    }
+async function loadReports(){
+ $("reportList").textContent="Loading...";
+ const {data,error}=await sb.from("video_reports").select("*").order("created_at",{ascending:false}).limit(200);
+ if(error){$("reportList").textContent=error.message;return;}
+ $("reportList").innerHTML=(data||[]).map(r=>`
+ <div class="item">
+ <b>Report: ${safe(r.reason)}</b>
+ <div class="small">Video ID: ${safe(r.video_id)}</div>
+ <div class="small">Status: ${safe(r.status)}</div>
+ <button class="green" onclick="updateReport('${safe(r.id)}','reviewed')">Mark Reviewed</button>
+ <button onclick="updateReport('${safe(r.id)}','resolved')">Resolve</button>
+ <button class="danger" onclick="updateReport('${safe(r.id)}','rejected')">Reject</button>
+ </div>`).join("") || "No reports found.";
+}
 
-    async function adminDeleteVideo(videoId, filePath) {
-      if (!confirm('Delete this video permanently?')) return;
-      if (filePath) {
-        await sb.storage.from('Videos').remove([filePath]);
-      }
-      const { error } = await sb.from('videos').delete().eq('id', videoId);
-      if (error) {
-        showToast('Error: ' + error.message);
-      } else {
-        showToast('Video deleted successfully');
-        refreshAllData();
-      }
-    }
+async function updateReport(id,status){
+ const {error}=await sb.from("video_reports").update({status}).eq("id",id);
+ if(error){message("Update failed: "+error.message);return;}
+ message("Report status updated.");
+ loadReports();
+}
 
-    function renderUsersTable(profiles) {
-      const tbody = document.getElementById('admin-users-tbody');
-      if (!profiles.length) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">No channels found.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = profiles.map(p => `
-        <tr class="hover:bg-zinc-900/60 transition-colors">
-          <td class="p-3.5 font-semibold text-white">${p.channel_name || 'Unnamed'}</td>
-          <td class="p-3.5 text-gray-400">${p.username || '-'}</td>
-          <td class="p-3.5 text-gray-500 font-mono text-[11px]">${p.user_id}</td>
-          <td class="p-3.5 text-right">
-            <button onclick="adminDeleteChannel('${p.user_id}')" class="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-[11px] font-semibold">
-              Remove Channel
-            </button>
-          </td>
-        </tr>
-      `).join('');
-    }
+async function loadSubscribers(){
+ $("subscriberList").textContent="Loading...";
+ const {data,error}=await sb.from("subscriptions").select("*").limit(200);
+ if(error){$("subscriberList").textContent=error.message;return;}
+ $("subscriberList").innerHTML=(data||[]).map(s=>`
+ <div class="item">
+ <b>Subscription</b>
+ <div class="small">Subscriber ID: ${safe(s.user_id||s.subscriber_id)}</div>
+ <div class="small">Channel ID: ${safe(s.channel_id)}</div>
+ </div>`).join("") || "No subscribers found.";
+}
 
-    async function adminDeleteChannel(userId) {
-      if (!confirm('Remove this channel and all its uploaded videos?')) return;
-      await sb.from('videos').delete().eq('user_id', userId);
-      await sb.from('profiles').delete().eq('user_id', userId);
-      showToast('Channel removed');
-      refreshAllData();
-    }
-
-    function saveAdConfig() {
-      const config = {
-        active: document.getElementById('ad-active-toggle').checked,
-        title: document.getElementById('ad-title').value.trim(),
-        imageUrl: document.getElementById('ad-image-url').value.trim(),
-        targetUrl: document.getElementById('ad-target-url').value.trim()
-      };
-      localStorage.setItem('xhub_ad_config', JSON.stringify(config));
-      showToast('Ad settings saved!');
-    }
-
-    function saveSiteSettings() {
-      const settings = {
-        noticeText: document.getElementById('notice-text').value.trim(),
-        noticeActive: document.getElementById('notice-active').checked
-      };
-      localStorage.setItem('xhub_site_settings', JSON.stringify(settings));
-      showToast('Announcement updated!');
-    }
-
-    function loadSavedConfigs() {
-      try {
-        const ad = JSON.parse(localStorage.getItem('xhub_ad_config') || '{}');
-        document.getElementById('ad-active-toggle').checked = !!ad.active;
-        document.getElementById('ad-title').value = ad.title || '';
-        document.getElementById('ad-image-url').value = ad.imageUrl || '';
-        document.getElementById('ad-target-url').value = ad.targetUrl || '';
-
-        const st = JSON.parse(localStorage.getItem('xhub_site_settings') || '{}');
-        document.getElementById('notice-text').value = st.noticeText || '';
-        document.getElementById('notice-active').checked = !!st.noticeActive;
-      } catch (e) {}
-    }
-
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.remove('hidden');
-      setTimeout(() => t.classList.add('hidden'), 2500);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      if (sessionStorage.getItem('xhub_admin_auth') === 'true') {
-        document.getElementById('admin-lock-screen').classList.add('hidden');
-        document.getElementById('admin-workspace').classList.remove('hidden');
-        refreshAllData();
-      }
-    });
-  </script>
+sb.auth.getSession().then(async ({data})=>{
+ if(data.session){
+  currentUser=data.session.user;
+  await checkAdmin();
+ }
+});
+</script>
 </body>
 </html>
