@@ -1,1 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xhub-admin — Control Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            ytDark: '#0f0f0f',
+            ytDarkSec: '#1f1f1f',
+            ytDarkHover: '#2e2e2e',
+            ytRed: '#ff0000',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-ytDark text-gray-100 font-sans antialiased selection:bg-red-600 selection:text-white">
 
+  <!-- ADMIN LOCK SCREEN -->
+  <div id="admin-lock-screen" class="fixed inset-0 z-50 bg-ytDark flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-ytDarkSec border border-zinc-800 rounded-2xl p-6 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-full bg-ytRed/15 text-ytRed flex items-center justify-center mx-auto mb-3 text-xl">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h1 class="text-xl font-extrabold tracking-tight text-white">xhub-admin<span class="text-ytRed">.</span></h1>
+      <p class="text-xs text-gray-400 mt-1 mb-5">Enter admin passcode to access dashboard</p>
+      <input id="admin-passcode" type="password" placeholder="Admin Passcode" onkeydown="if(event.key==='Enter') verifyAdmin()" class="w-full px-3.5 py-2.5 mb-3 rounded-xl bg-zinc-900 border border-zinc-700 text-sm text-white focus:outline-none focus:border-ytRed text-center tracking-widest" />
+      <button onclick="verifyAdmin()" class="w-full py-2.5 rounded-xl bg-ytRed hover:bg-red-700 text-white text-xs font-semibold transition-colors">
+        Unlock Panel
+      </button>
+      <p id="lock-error" class="text-xs text-red-500 mt-2.5 hidden">Incorrect passcode!</p>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN WORKSPACE -->
+  <div id="admin-workspace" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- Sidebar -->
+    <aside class="w-full md:w-60 shrink-0 bg-ytDarkSec border-b md:border-b-0 md:border-r border-zinc-800 p-4 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between md:justify-start gap-2 mb-6 px-2">
+          <span class="text-xl font-extrabold tracking-tight text-white">xhub-admin<span class="text-ytRed">.</span></span>
+          <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-ytRed/20 text-ytRed">Admin</span>
+        </div>
+
+        <nav class="flex md:flex-col gap-1.5 overflow-x-auto">
+          <button onclick="switchAdminTab('overview')" data-tab="overview" class="admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-ytRed text-white shrink-0">
+            <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+            <span>Overview</span>
+          </button>
+          <button onclick="switchAdminTab('videos')" data-tab="videos" class="admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
+            <i class="fa-solid fa-video w-4 text-center"></i>
+            <span>Videos</span>
+          </button>
+          <button onclick="switchAdminTab('users')" data-tab="users" class="admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
+            <i class="fa-solid fa-users w-4 text-center"></i>
+            <span>Channels & Users</span>
+          </button>
+          <button onclick="switchAdminTab('earning')" data-tab="earning" class="admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
+            <i class="fa-solid fa-indian-rupee-sign w-4 text-center"></i>
+            <span>Ads & Earning</span>
+          </button>
+          <button onclick="switchAdminTab('settings')" data-tab="settings" class="admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0">
+            <i class="fa-solid fa-bullhorn w-4 text-center"></i>
+            <span>Announcements</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="hidden md:block pt-4 border-t border-zinc-800 space-y-2">
+        <a href="index.html" class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-ytDarkHover">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Open Xhub Site
+        </a>
+        <button onclick="logoutAdmin()" class="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs text-red-400 hover:bg-red-950/40">
+          <i class="fa-solid fa-right-from-bracket"></i> Lock Admin
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+      
+      <!-- Top Bar -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 id="page-heading" class="text-lg sm:text-xl font-bold text-white">Dashboard Overview</h2>
+        <button onclick="refreshAllData()" class="px-3.5 py-1.5 rounded-xl bg-ytDarkSec hover:bg-ytDarkHover border border-zinc-700 text-xs font-semibold flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+      </div>
+
+      <!-- 1. OVERVIEW TAB -->
+      <section id="sec-overview" class="admin-section space-y-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
+            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
+              <span>Total Videos</span>
+              <i class="fa-solid fa-film text-ytRed"></i>
+            </div>
+            <p id="stat-videos" class="text-2xl font-extrabold text-white">0</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
+            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
+              <span>Total Channels</span>
+              <i class="fa-solid fa-user-check text-emerald-400"></i>
+            </div>
+            <p id="stat-users" class="text-2xl font-extrabold text-white">0</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
+            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
+              <span>Total Views</span>
+              <i class="fa-solid fa-eye text-blue-400"></i>
+            </div>
+            <p id="stat-views" class="text-2xl font-extrabold text-white">0</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-ytDarkSec border border-zinc-800">
+            <div class="flex items-center justify-between text-gray-400 text-xs mb-2">
+              <span>Subscriptions</span>
+              <i class="fa-solid fa-bell text-amber-400"></i>
+            </div>
+            <p id="stat-subs" class="text-2xl font-extrabold text-white">0</p>
+          </div>
+        </div>
+
+        <!-- Recent Videos Quick Table -->
+        <div class="bg-ytDarkSec border border-zinc-800 rounded-2xl p-4">
+          <h3 class="text-sm font-bold text-white mb-3">Latest Uploaded Videos</h3>
+          <div id="overview-recent-videos" class="divide-y divide-zinc-800 text-xs"></div>
+        </div>
+      </section>
+
+      <!-- 2. VIDEOS MANAGEMENT TAB -->
+      <section id="sec-videos" class="admin-section hidden space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3 justify-between">
+          <input id="admin-video-search" oninput="filterAdminVideos()" type="text" placeholder="Search video title or channel..." class="w-full sm:w-80 px-3.5 py-2 rounded-xl bg-ytDarkSec border border-zinc-700 text-xs text-white focus:outline-none focus:border-ytRed" />
+        </div>
+
+        <div class="bg-ytDarkSec border border-zinc-800 rounded-2xl overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-zinc-800 text-gray-400">
+                <th class="p-3.5">Video</th>
+                <th class="p-3.5">Channel</th>
+                <th class="p-3.5">Views</th>
+                <th class="p-3.5">Likes</th>
+                <th class="p-3.5">Uploaded</th>
+                <th class="p-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-videos-tbody" class="divide-y divide-zinc-800"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. CHANNELS & USERS TAB -->
+      <section id="sec-users" class="admin-section hidden space-y-4">
+        <div class="bg-ytDarkSec border border-zinc-800 rounded-2xl overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-zinc-800 text-gray-400">
+                <th class="p-3.5">Channel Name</th>
+                <th class="p-3.5">Username</th>
+                <th class="p-3.5">User ID</th>
+                <th class="p-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody" class="divide-y divide-zinc-800"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 4. ADS & EARNING TAB -->
+      <section id="sec-earning" class="admin-section hidden space-y-5 max-w-2xl">
+        <div class="p-5 rounded-2xl bg-ytDarkSec border border-zinc-800 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white">Banner Ad Manager (Direct Monetization)</h3>
+              <p class="text-xs text-gray-400">Add sponsor banner image & link to display on Xhub Home / Watch page.</p>
+            </div>
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input id="ad-active-toggle" type="checkbox" class="accent-ytRed w-4 h-4" />
+              <span>Enable Ads</span>
+            </label>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Sponsor / Ad Title</label>
+              <input id="ad-title" type="text" placeholder="e.g., Special Offer 50% Off" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Banner Image URL</label>
+              <input id="ad-image-url" type="text" placeholder="https://example.com/banner.jpg" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-400 mb-1">Target Link (Click URL)</label>
+              <input id="ad-target-url" type="text" placeholder="https://sponsor-website.com" class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
+            </div>
+          </div>
+
+          <button onclick="saveAdConfig()" class="px-5 py-2 rounded-xl bg-ytRed hover:bg-red-700 text-white text-xs font-semibold">
+            Save Ad Settings
+          </button>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-ytDarkSec border border-zinc-800 space-y-3">
+          <h3 class="text-sm font-bold text-white">AdSense / Adsterra Script Code</h3>
+          <p class="text-xs text-gray-400">Paste third-party ad network script tag to store in site config.</p>
+          <textarea id="ad-script-code" rows="4" placeholder="<script>...</script>" class="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-gray-200 font-mono"></textarea>
+          <button onclick="saveAdConfig()" class="px-5 py-2 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-semibold">
+            Save Script
+          </button>
+        </div>
+      </section>
+
+      <!-- 5. ANNOUNCEMENTS & SITE CONTROL TAB -->
+      <section id="sec-settings" class="admin-section hidden space-y-5 max-w-2xl">
+        <div class="p-5 rounded-2xl bg-ytDarkSec border border-zinc-800 space-y-4">
+          <h3 class="text-sm font-bold text-white">Global Notice / Broadcast Banner</h3>
+          <p class="text-xs text-gray-400">Show an important notice bar at the top of Xhub for all users.</p>
+          <input id="notice-text" type="text" placeholder="e.g., Welcome to Xhub! Upload your videos now." class="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white" />
+          <div class="flex items-center justify-between pt-2">
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input id="notice-active" type="checkbox" class="accent-ytRed w-4 h-4" />
+              <span>Show Notice on Website</span>
+            </label>
+            <button onclick="saveSiteSettings()" class="px-5 py-2 rounded-xl bg-ytRed hover:bg-red-700 text-white text-xs font-semibold">
+              Update Notice
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-zinc-900 border border-zinc-700 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://scczyiossqleuzidplxx.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_rvecUf_3ZkeAxnbAJ8iiiw_2mItGPT2";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Change your admin passcode here
+    const ADMIN_PASSCODE = "xhub2026";
+
+    let allVideosCache = [];
+    let allProfilesMap = {};
+
+    function verifyAdmin() {
+      const input = document.getElementById('admin-passcode').value;
+      const err = document.getElementById('lock-error');
+      if (input === ADMIN_PASSCODE) {
+        sessionStorage.setItem('xhub_admin_auth', 'true');
+        document.getElementById('admin-lock-screen').classList.add('hidden');
+        document.getElementById('admin-workspace').classList.remove('hidden');
+        err.classList.add('hidden');
+        refreshAllData();
+      } else {
+        err.classList.remove('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('xhub_admin_auth');
+      location.reload();
+    }
+
+    function switchAdminTab(tab) {
+      document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+        const active = btn.getAttribute('data-tab') === tab;
+        btn.className = active
+          ? 'admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-ytRed text-white shrink-0'
+          : 'admin-nav-btn flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-ytDarkHover shrink-0';
+      });
+
+      document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
+      document.getElementById(`sec-${tab}`).classList.remove('hidden');
+
+      const titles = {
+        overview: 'Dashboard Overview',
+        videos: 'All Uploaded Videos',
+        users: 'Channels & Registered Users',
+        earning: 'Ads & Earning Manager',
+        settings: 'Site Announcements'
+      };
+      document.getElementById('page-heading').textContent = titles[tab] || 'Admin';
+    }
+
+    async function refreshAllData() {
+      showToast('Syncing database...');
+      const [{ data: profiles }, { data: videos }, { count: subCount }] = await Promise.all([
+        sb.from('profiles').select('*'),
+        sb.from('videos').select('*').order('created_at', { ascending: false }),
+        sb.from('subscriptions').select('*', { count: 'exact', head: true })
+      ]);
+
+      allProfilesMap = {};
+      (profiles || []).forEach(p => { allProfilesMap[p.user_id] = p; });
+      allVideosCache = videos || [];
+
+      // Stats
+      const totalViews = allVideosCache.reduce((sum, v) => sum + (v.views || 0), 0);
+      document.getElementById('stat-videos').textContent = allVideosCache.length;
+      document.getElementById('stat-users').textContent = (profiles || []).length;
+      document.getElementById('stat-views').textContent = totalViews;
+      document.getElementById('stat-subs').textContent = subCount || 0;
+
+      renderOverviewRecent();
+      renderVideosTable(allVideosCache);
+      renderUsersTable(profiles || []);
+      loadSavedConfigs();
+    }
+
+    function renderOverviewRecent() {
+      const box = document.getElementById('overview-recent-videos');
+      if (allVideosCache.length === 0) {
+        box.innerHTML = `<p class="py-4 text-gray-400">No videos uploaded yet.</p>`;
+        return;
+      }
+      box.innerHTML = allVideosCache.slice(0, 5).map(v => {
+        const ch = allProfilesMap[v.user_id]?.channel_name || 'Creator';
+        return `
+          <div class="py-2.5 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold text-white truncate">${v.title}</p>
+              <p class="text-gray-400 text-[11px]">${ch} • ${v.views || 0} views</p>
+            </div>
+            <button onclick="adminDeleteVideo('${v.id}', '${v.file_path}')" class="px-3 py-1 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-[11px] font-semibold shrink-0">
+              Delete
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderVideosTable(list) {
+      const tbody = document.getElementById('admin-videos-tbody');
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-5 text-center text-gray-400">No videos found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = list.map(v => {
+        const prof = allProfilesMap[v.user_id];
+        const chName = prof?.channel_name || 'Creator';
+        const dateStr = new Date(v.created_at).toLocaleDateString();
+        return `
+          <tr class="hover:bg-zinc-900/50">
+            <td class="p-3.5 font-semibold text-white max-w-xs truncate">${v.title}</td>
+            <td class="p-3.5 text-gray-300">${chName}</td>
+            <td class="p-3.5 text-gray-300">${v.views || 0}</td>
+            <td class="p-3.5 text-gray-300">${v.likes || 0}</td>
+            <td class="p-3.5 text-gray-400">${dateStr}</td>
+            <td class="p-3.5 text-right">
+              <button onclick="adminDeleteVideo('${v.id}', '${v.file_path}')" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold">
+                <i class="fa-solid fa-trash mr-1"></i> Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterAdminVideos() {
+      const q = document.getElementById('admin-video-search').value.toLowerCase();
+      const filtered = allVideosCache.filter(v => {
+        const ch = (allProfilesMap[v.user_id]?.channel_name || '').toLowerCase();
+        return v.title.toLowerCase().includes(q) || ch.includes(q);
+      });
+      renderVideosTable(filtered);
+    }
+
+    async function adminDeleteVideo(videoId, filePath) {
+      if (!confirm('Delete this video permanently?')) return;
+      if (filePath) {
+        await sb.storage.from('Videos').remove([filePath]);
+      }
+      const { error } = await sb.from('videos').delete().eq('id', videoId);
+      if (error) {
+        showToast('Error: ' + error.message);
+      } else {
+        showToast('Video deleted!');
+        refreshAllData();
+      }
+    }
+
+    function renderUsersTable(profiles) {
+      const tbody = document.getElementById('admin-users-tbody');
+      if (!profiles.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-5 text-center text-gray-400">No channels found.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = profiles.map(p => `
+        <tr class="hover:bg-zinc-900/50">
+          <td class="p-3.5 font-semibold text-white">${p.channel_name || 'Unnamed'}</td>
+          <td class="p-3.5 text-gray-400">${p.username || '-'}</td>
+          <td class="p-3.5 text-gray-500 font-mono text-[11px]">${p.user_id}</td>
+          <td class="p-3.5 text-right">
+            <button onclick="adminDeleteChannel('${p.user_id}')" class="px-3 py-1.5 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white text-[11px] font-semibold">
+              Remove Channel
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function adminDeleteChannel(userId) {
+      if (!confirm('Remove this channel profile and all its videos?')) return;
+      await sb.from('videos').delete().eq('user_id', userId);
+      await sb.from('profiles').delete().eq('user_id', userId);
+      showToast('Channel removed');
+      refreshAllData();
+    }
+
+    function saveAdConfig() {
+      const config = {
+        active: document.getElementById('ad-active-toggle').checked,
+        title: document.getElementById('ad-title').value.trim(),
+        imageUrl: document.getElementById('ad-image-url').value.trim(),
+        targetUrl: document.getElementById('ad-target-url').value.trim(),
+        script: document.getElementById('ad-script-code').value
+      };
+      localStorage.setItem('xhub_ad_config', JSON.stringify(config));
+      showToast('Ad settings saved!');
+    }
+
+    function saveSiteSettings() {
+      const settings = {
+        noticeText: document.getElementById('notice-text').value.trim(),
+        noticeActive: document.getElementById('notice-active').checked
+      };
+      localStorage.setItem('xhub_site_settings', JSON.stringify(settings));
+      showToast('Announcement updated!');
+    }
+
+    function loadSavedConfigs() {
+      try {
+        const ad = JSON.parse(localStorage.getItem('xhub_ad_config') || '{}');
+        document.getElementById('ad-active-toggle').checked = !!ad.active;
+        document.getElementById('ad-title').value = ad.title || '';
+        document.getElementById('ad-image-url').value = ad.imageUrl || '';
+        document.getElementById('ad-target-url').value = ad.targetUrl || '';
+        document.getElementById('ad-script-code').value = ad.script || '';
+
+        const st = JSON.parse(localStorage.getItem('xhub_site_settings') || '{}');
+        document.getElementById('notice-text').value = st.noticeText || '';
+        document.getElementById('notice-active').checked = !!st.noticeActive;
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 2500);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('xhub_admin_auth') === 'true') {
+        document.getElementById('admin-lock-screen').classList.add('hidden');
+        document.getElementById('admin-workspace').classList.remove('hidden');
+        refreshAllData();
+      }
+    });
+  </script>
+</body>
+</html>
