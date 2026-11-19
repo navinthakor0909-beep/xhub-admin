@@ -1,284 +1,575 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>X Hub Admin Panel</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#101116;color:white;font-family:Arial,sans-serif}
-header{background:#191b23;padding:17px;display:flex;justify-content:space-between;align-items:center}
-header h2{margin:0;color:#ff3155}
-button{background:#ff3155;color:white;border:0;padding:11px 15px;border-radius:7px;cursor:pointer;margin:4px}
-button:disabled{opacity:.5}
-input{width:100%;padding:13px;margin:8px 0;background:#222530;color:white;border:1px solid #444;border-radius:7px}
-#login{max-width:380px;margin:70px auto;padding:20px;background:#191b23;border-radius:12px}
-#app{display:none}
-nav{display:flex;gap:6px;overflow-x:auto;padding:12px;background:#191b23}
-nav button{white-space:nowrap;background:#30333e}
-nav button.active{background:#ff3155}
-main{padding:15px;max-width:1100px;margin:auto}
-.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.card,.panel{background:#1b1e27;padding:17px;border-radius:10px;margin-bottom:12px}
-.card strong{display:block;font-size:25px;margin-top:10px}
-.item{background:#20232d;padding:13px;border-radius:8px;margin:9px 0;overflow-wrap:anywhere}
-.small{color:#aaa;font-size:13px}
-.danger{background:#b52238}
-.green{background:#16834c}
-#message{padding:10px;color:#ffca70;white-space:pre-wrap}
-@media(min-width:700px){.cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>X Hub — Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            admBg: '#0f0f0f',
+            admCard: '#16161a',
+            admSec: '#1e1e24',
+            admBorder: '#2a2a32',
+            admRed: '#ff001e'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 7px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(161, 161, 170, 0.28); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(161, 161, 170, 0.5); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body>
+<body class="bg-admBg text-zinc-100 font-sans antialiased min-h-screen">
 
-<header>
-<h2>X HUB ADMIN</h2>
-<button onclick="logout()">Logout</button>
-</header>
+  <!-- Top Horizontal Admin Header & Navigation -->
+  <header class="sticky top-0 z-40 bg-admBg/95 backdrop-blur-md border-b border-admBorder">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5 shrink-0">
+        <span class="text-xl font-extrabold tracking-tight">X Hub<span class="text-admRed">.</span></span>
+        <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-admSec border border-admBorder text-zinc-300">Admin</span>
+      </div>
 
-<div id="login">
-<h2>Admin Login</h2>
-<input id="email" type="email" placeholder="Admin Email">
-<input id="password" type="password" placeholder="Password">
-<button style="width:100%" onclick="login()">Login</button>
-<div id="loginMsg"></div>
-</div>
+      <!-- Horizontal Nav Tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+        <button data-admin-tab="overview" onclick="switchAdminTab('overview')" class="admin-nav-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-admRed text-white shrink-0 transition">
+          Overview
+        </button>
+        <button data-admin-tab="videos" onclick="switchAdminTab('videos')" class="admin-nav-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-400 hover:text-white hover:bg-admSec shrink-0 transition">
+          Videos
+        </button>
+        <button data-admin-tab="creators" onclick="switchAdminTab('creators')" class="admin-nav-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-400 hover:text-white hover:bg-admSec shrink-0 transition">
+          Creators
+        </button>
+        <button data-admin-tab="earnings" onclick="switchAdminTab('earnings')" class="admin-nav-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-400 hover:text-white hover:bg-admSec shrink-0 transition">
+          Earnings
+        </button>
+      </nav>
 
-<div id="app">
-<nav>
-<button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
-<button onclick="showPage('users',this)">Users</button>
-<button onclick="showPage('creators',this)">Creators</button>
-<button onclick="showPage('videos',this)">Videos</button>
-<button onclick="showPage('reports',this)">Reports</button>
-<button onclick="showPage('subscribers',this)">Subscribers</button>
-</nav>
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="refreshAdminData()" title="Refresh Data" class="w-9 h-9 rounded-full bg-admSec hover:bg-zinc-700 border border-admBorder flex items-center justify-center text-zinc-200 text-xs transition">
+          <i id="refresh-icon" class="fa-solid fa-rotate-right"></i>
+        </button>
+      </div>
+    </div>
+  </header>
 
-<main>
-<div id="message"></div>
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-<section id="dashboard">
-<h2>Dashboard Statistics</h2>
-<div class="cards">
-<div class="card">Total Users<strong id="totalUsers">0</strong></div>
-<div class="card">Total Videos<strong id="totalVideos">0</strong></div>
-<div class="card">Creators<strong id="totalCreators">0</strong></div>
-<div class="card">Subscribers<strong id="totalSubs">0</strong></div>
-</div>
-<button onclick="refreshAll()">Refresh Dashboard</button>
-</section>
+    <!-- 1. OVERVIEW TAB -->
+    <section id="admin-tab-overview" class="admin-section space-y-6">
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div class="p-4 rounded-2xl bg-admCard border border-admBorder">
+          <div class="text-xs text-zinc-400">Total Videos</div>
+          <div id="stat-total-videos" class="text-2xl font-extrabold text-white mt-1">0</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-admCard border border-admBorder">
+          <div class="text-xs text-zinc-400">Total Creators</div>
+          <div id="stat-total-creators" class="text-2xl font-extrabold text-white mt-1">0</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-admCard border border-admBorder">
+          <div class="text-xs text-zinc-400">Total Views</div>
+          <div id="stat-total-views" class="text-2xl font-extrabold text-white mt-1">0</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-admCard border border-admBorder">
+          <div class="text-xs text-zinc-400">Watch Time</div>
+          <div id="stat-watch-time" class="text-2xl font-extrabold text-white mt-1">0m</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-admCard border border-admBorder col-span-2 lg:col-span-1">
+          <div class="text-xs text-zinc-400">Est. Earnings</div>
+          <div id="stat-total-earnings" class="text-2xl font-extrabold text-emerald-400 mt-1">₹0.00</div>
+        </div>
+      </div>
 
-<section id="users" hidden>
-<h2>User List</h2>
-<div id="userList"></div>
-</section>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="p-5 rounded-2xl bg-admCard border border-admBorder">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-white">Recent Uploaded Videos</h2>
+            <button onclick="switchAdminTab('videos')" class="text-xs text-admRed hover:underline font-semibold">View all</button>
+          </div>
+          <div id="overview-recent-videos" class="divide-y divide-admBorder"></div>
+        </div>
 
-<section id="creators" hidden>
-<h2>Creator List</h2>
-<div id="creatorList"></div>
-</section>
+        <div class="p-5 rounded-2xl bg-admCard border border-admBorder">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-white">Top Creators by Views</h2>
+            <button onclick="switchAdminTab('earnings')" class="text-xs text-admRed hover:underline font-semibold">Manage earnings</button>
+          </div>
+          <div id="overview-top-creators" class="divide-y divide-admBorder"></div>
+        </div>
+      </div>
+    </section>
 
-<section id="videos" hidden>
-<h2>Video Management</h2>
-<div id="videoList"></div>
-</section>
+    <!-- 2. VIDEOS TAB -->
+    <section id="admin-tab-videos" class="admin-section hidden space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 class="text-lg font-extrabold text-white">All Videos</h1>
+        <input id="video-search-input" type="text" oninput="renderVideosTable()" placeholder="Search video title or creator..." class="w-full sm:w-72 px-3.5 py-2 rounded-xl bg-admCard border border-admBorder text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-admRed" />
+      </div>
 
-<section id="reports" hidden>
-<h2>Video Reports</h2>
-<div id="reportList"></div>
-</section>
+      <div class="rounded-2xl bg-admCard border border-admBorder overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-admBorder text-[11px] uppercase tracking-wider text-zinc-400 bg-admSec/60">
+              <th class="py-3 px-4">Video</th>
+              <th class="py-3 px-4">Creator</th>
+              <th class="py-3 px-4">Views</th>
+              <th class="py-3 px-4">Likes</th>
+              <th class="py-3 px-4">Uploaded</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="videos-table-body" class="divide-y divide-admBorder text-xs"></tbody>
+        </table>
+      </div>
+    </section>
 
-<section id="subscribers" hidden>
-<h2>Subscribers</h2>
-<div id="subscriberList"></div>
-</section>
-</main>
-</div>
+    <!-- 3. CREATORS TAB -->
+    <section id="admin-tab-creators" class="admin-section hidden space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h1 class="text-lg font-extrabold text-white">All Creators</h1>
+        <input id="creator-search-input" type="text" oninput="renderCreatorsTable()" placeholder="Search name or @handle..." class="w-full sm:w-72 px-3.5 py-2 rounded-xl bg-admCard border border-admBorder text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-admRed" />
+      </div>
 
-<script>
-const SUPABASE_URL = "https://scczyiossqleuzidplxx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_rvecUf_3ZkeAxnbAJ8iiiw_2mItGPT2";
+      <div class="rounded-2xl bg-admCard border border-admBorder overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-admBorder text-[11px] uppercase tracking-wider text-zinc-400 bg-admSec/60">
+              <th class="py-3 px-4">Creator</th>
+              <th class="py-3 px-4">Handle</th>
+              <th class="py-3 px-4">Videos</th>
+              <th class="py-3 px-4">Subscribers</th>
+              <th class="py-3 px-4">Total Views</th>
+            </tr>
+          </thead>
+          <tbody id="creators-table-body" class="divide-y divide-admBorder text-xs"></tbody>
+        </table>
+      </div>
+    </section>
 
-const sb = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let currentUser = null;
+    <!-- 4. EARNINGS TAB -->
+    <section id="admin-tab-earnings" class="admin-section hidden space-y-5">
+      <div class="p-5 rounded-2xl bg-admCard border border-admBorder flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div class="space-y-1">
+          <h1 class="text-lg font-extrabold text-white">Creator Earnings & RPM Settings</h1>
+          <p class="text-xs text-zinc-400">Set earning rate per 1,000 views (RPM in ₹) to calculate creator revenue.</p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <div>
+            <label class="block text-[11px] text-zinc-400 mb-1">RPM (₹ per 1,000 views)</label>
+            <input id="rpm-rate-input" type="number" min="0" step="0.5" value="25" class="w-36 px-3 py-2 rounded-xl bg-admSec border border-admBorder text-xs font-bold text-white focus:outline-none focus:border-admRed" />
+          </div>
+          <button onclick="updateRpmRate()" class="px-4 py-2 rounded-xl bg-admRed hover:bg-red-700 text-white text-xs font-bold mt-4 transition">
+            Apply Rate
+          </button>
+        </div>
+      </div>
 
-const $ = id => document.getElementById(id);
+      <div class="rounded-2xl bg-admCard border border-admBorder overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-admBorder text-[11px] uppercase tracking-wider text-zinc-400 bg-admSec/60">
+              <th class="py-3 px-4">Creator</th>
+              <th class="py-3 px-4">Views</th>
+              <th class="py-3 px-4">Watch Time</th>
+              <th class="py-3 px-4">Calculated Earning</th>
+              <th class="py-3 px-4">Payout Status</th>
+              <th class="py-3 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="earnings-table-body" class="divide-y divide-admBorder text-xs"></tbody>
+        </table>
+      </div>
+    </section>
 
-function safe(value){
- return String(value ?? "").replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- })[c]);
-}
+  </main>
 
-function message(text){
- $("message").textContent = text;
-}
+  <!-- Video Preview Modal -->
+  <div id="preview-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-admCard w-full max-w-2xl rounded-2xl border border-admBorder overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-admBorder">
+        <h3 id="preview-video-title" class="text-sm font-bold text-white truncate">Video Preview</h3>
+        <button onclick="closePreviewModal()" class="w-8 h-8 rounded-full hover:bg-admSec flex items-center justify-center text-zinc-300">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-4 bg-black">
+        <video id="preview-video-player" controls autoplay class="w-full aspect-video rounded-xl object-contain"></video>
+      </div>
+    </div>
+  </div>
 
-async function login(){
- $("loginMsg").textContent="Checking login...";
- const email=$("email").value.trim();
- const password=$("password").value;
+  <!-- Toast -->
+  <div id="admin-toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-zinc-900 border border-admBorder text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold"></div>
 
- const {data,error}=await sb.auth.signInWithPassword({email,password});
- if(error){
-  $("loginMsg").textContent=error.message;
-  return;
- }
- currentUser=data.user;
- await checkAdmin();
-}
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://scczyiossqleuzidplxx.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_rvecUf_3ZkeAxnbAJ8iiiw_2mItGPT2";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function checkAdmin(){
- const {data,error}=await sb
-  .from("admin_users")
-  .select("user_id")
-  .eq("user_id",currentUser.id)
-  .maybeSingle();
+    let allVideos = [];
+    let allProfiles = [];
+    let allSubs = [];
+    let allAnalytics = [];
+    let rpmRate = Number(localStorage.getItem('xhub_admin_rpm') || 25);
+    let settledCreators = JSON.parse(localStorage.getItem('xhub_settled_creators') || '{}');
 
- if(error || !data){
-  await sb.auth.signOut();
-  currentUser=null;
-  $("loginMsg").textContent="You are not an authorized admin.";
-  return;
- }
+    document.getElementById('rpm-rate-input').value = rpmRate;
 
- $("login").style.display="none";
- $("app").style.display="block";
- message("Admin login successful.");
- refreshAll();
-}
+    function showToast(msg) {
+      const t = document.getElementById('admin-toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 2500);
+    }
 
-async function logout(){
- await sb.auth.signOut();
- currentUser=null;
- $("app").style.display="none";
- $("login").style.display="block";
- $("password").value="";
-}
+    function switchAdminTab(tab) {
+      document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
+      document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
 
-function showPage(page,btn){
- document.querySelectorAll("main section").forEach(s=>s.hidden=true);
- $(page).hidden=false;
- document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
- btn.classList.add("active");
+      document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+        const active = btn.getAttribute('data-admin-tab') === tab;
+        btn.className = active
+          ? 'admin-nav-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-admRed text-white shrink-0 transition'
+          : 'admin-nav-btn px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium text-zinc-400 hover:text-white hover:bg-admSec shrink-0 transition';
+      });
+    }
 
- if(page==="users") loadUsers();
- if(page==="creators") loadCreators();
- if(page==="videos") loadVideos();
- if(page==="reports") loadReports();
- if(page==="subscribers") loadSubscribers();
-}
+    function timeAgo(dateString) {
+      if (!dateString) return 'recently';
+      const sec = Math.floor((new Date() - new Date(dateString)) / 1000);
+      if (sec >= 31536000) return Math.floor(sec / 31536000) + 'y ago';
+      if (sec >= 2592000) return Math.floor(sec / 2592000) + 'mo ago';
+      if (sec >= 86400) return Math.floor(sec / 86400) + 'd ago';
+      if (sec >= 3600) return Math.floor(sec / 3600) + 'h ago';
+      if (sec >= 60) return Math.floor(sec / 60) + 'm ago';
+      return 'just now';
+    }
 
-async function countRows(table){
- const {count,error}=await sb.from(table).select("*",{count:"exact",head:true});
- if(error) throw error;
- return count||0;
-}
+    function formatWatchTime(seconds) {
+      const mins = Math.floor((seconds || 0) / 60);
+      if (mins >= 60) return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+      return `${mins}m`;
+    }
 
-async function refreshAll(){
- try{
-  const [users,videos,creators,subs]=await Promise.all([
-   countRows("profiles"),
-   countRows("videos"),
-   countRows("profiles"),
-   countRows("subscriptions")
-  ]);
-  $("totalUsers").textContent=users;
-  $("totalVideos").textContent=videos;
-  $("totalCreators").textContent=creators;
-  $("totalSubs").textContent=subs;
-  message("Dashboard updated.");
- }catch(e){
-  message("Dashboard error: "+e.message);
- }
-}
+    function calcEarning(views) {
+      return ((views || 0) / 1000) * rpmRate;
+    }
 
-async function loadUsers(){
- $("userList").textContent="Loading...";
- const {data,error}=await sb.from("profiles").select("*").limit(200);
- if(error){$("userList").textContent=error.message;return;}
- $("userList").innerHTML=(data||[]).map(u=>`
- <div class="item">
- <b>${safe(u.username||u.name||"User")}</b>
- <div class="small">User ID: ${safe(u.user_id||u.id)}</div>
- </div>`).join("") || "No users found.";
-}
+    function getProfileMap() {
+      const map = {};
+      allProfiles.forEach(p => { map[p.user_id] = p; });
+      return map;
+    }
 
-async function loadCreators(){
- $("creatorList").textContent="Loading...";
- const {data,error}=await sb.from("profiles").select("*").limit(200);
- if(error){$("creatorList").textContent=error.message;return;}
- $("creatorList").innerHTML=(data||[]).map(u=>`
- <div class="item">
- <b>${safe(u.username||u.name||"Creator")}</b>
- <div class="small">User ID: ${safe(u.user_id||u.id)}</div>
- </div>`).join("") || "No creators found.";
-}
+    async function refreshAdminData() {
+      const icon = document.getElementById('refresh-icon');
+      icon.classList.add('fa-spin');
 
-async function loadVideos(){
- $("videoList").textContent="Loading...";
- const {data,error}=await sb.from("videos").select("*").order("id",{ascending:false}).limit(200);
- if(error){$("videoList").textContent=error.message;return;}
- $("videoList").innerHTML=(data||[]).map(v=>`
- <div class="item">
- <b>${safe(v.title||"Untitled Video")}</b>
- <div class="small">Video ID: ${safe(v.id)}</div>
- <div class="small">Views: ${safe(v.views??0)}</div>
- <button class="danger" onclick="deleteVideo('${safe(v.id)}')">Delete Video</button>
- </div>`).join("") || "No videos found.";
-}
+      const [vidRes, profRes, subRes, anaRes] = await Promise.all([
+        sb.from('videos').select('*').order('created_at', { ascending: false }),
+        sb.from('profiles').select('*'),
+        sb.from('subscriptions').select('*'),
+        sb.from('video_analytics_events').select('*')
+      ]);
 
-async function deleteVideo(id){
- if(!confirm("Are you sure you want to delete this video record?"))return;
- const {error}=await sb.from("videos").delete().eq("id",id);
- if(error){message("Delete failed: "+error.message);return;}
- message("Video record deleted.");
- loadVideos();
- refreshAll();
-}
+      allVideos = vidRes.data || [];
+      allProfiles = profRes.data || [];
+      allSubs = subRes.data || [];
+      allAnalytics = anaRes.data || [];
 
-async function loadReports(){
- $("reportList").textContent="Loading...";
- const {data,error}=await sb.from("video_reports").select("*").order("created_at",{ascending:false}).limit(200);
- if(error){$("reportList").textContent=error.message;return;}
- $("reportList").innerHTML=(data||[]).map(r=>`
- <div class="item">
- <b>Report: ${safe(r.reason)}</b>
- <div class="small">Video ID: ${safe(r.video_id)}</div>
- <div class="small">Status: ${safe(r.status)}</div>
- <button class="green" onclick="updateReport('${safe(r.id)}','reviewed')">Mark Reviewed</button>
- <button onclick="updateReport('${safe(r.id)}','resolved')">Resolve</button>
- <button class="danger" onclick="updateReport('${safe(r.id)}','rejected')">Reject</button>
- </div>`).join("") || "No reports found.";
-}
+      renderOverview();
+      renderVideosTable();
+      renderCreatorsTable();
+      renderEarningsTable();
 
-async function updateReport(id,status){
- const {error}=await sb.from("video_reports").update({status}).eq("id",id);
- if(error){message("Update failed: "+error.message);return;}
- message("Report status updated.");
- loadReports();
-}
+      setTimeout(() => icon.classList.remove('fa-spin'), 400);
+    }
 
-async function loadSubscribers(){
- $("subscriberList").textContent="Loading...";
- const {data,error}=await sb.from("subscriptions").select("*").limit(200);
- if(error){$("subscriberList").textContent=error.message;return;}
- $("subscriberList").innerHTML=(data||[]).map(s=>`
- <div class="item">
- <b>Subscription</b>
- <div class="small">Subscriber ID: ${safe(s.user_id||s.subscriber_id)}</div>
- <div class="small">Channel ID: ${safe(s.channel_id)}</div>
- </div>`).join("") || "No subscribers found.";
-}
+    function renderOverview() {
+      const totalViews = allVideos.reduce((acc, v) => acc + (v.views || 0), 0);
+      const totalWatchSec = allAnalytics
+        .filter(e => e.event_type === 'watch_time')
+        .reduce((acc, e) => acc + (e.watch_seconds || 0), 0);
+      const totalEarnings = calcEarning(totalViews);
 
-sb.auth.getSession().then(async ({data})=>{
- if(data.session){
-  currentUser=data.session.user;
-  await checkAdmin();
- }
-});
-</script>
+      document.getElementById('stat-total-videos').textContent = allVideos.length;
+      document.getElementById('stat-total-creators').textContent = allProfiles.length;
+      document.getElementById('stat-total-views').textContent = totalViews.toLocaleString('en-IN');
+      document.getElementById('stat-watch-time').textContent = formatWatchTime(totalWatchSec);
+      document.getElementById('stat-total-earnings').textContent = `₹${totalEarnings.toFixed(2)}`;
+
+      const pMap = getProfileMap();
+      const recentEl = document.getElementById('overview-recent-videos');
+      const recentList = allVideos.slice(0, 5);
+      recentEl.innerHTML = recentList.length
+        ? recentList.map(v => {
+            const creator = pMap[v.user_id]?.channel_name || 'Creator';
+            return `
+              <div class="py-2.5 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-xs font-semibold text-white truncate">${v.title}</div>
+                  <div class="text-[11px] text-zinc-400">${creator} • ${timeAgo(v.created_at)}</div>
+                </div>
+                <div class="text-xs font-semibold text-zinc-300 shrink-0">${v.views || 0} views</div>
+              </div>
+            `;
+          }).join('')
+        : `<p class="text-xs text-zinc-500 py-4">No videos found.</p>`;
+
+      const creatorStats = buildCreatorStats();
+      const topEl = document.getElementById('overview-top-creators');
+      const topList = creatorStats.slice(0, 5);
+      topEl.innerHTML = topList.length
+        ? topList.map(c => `
+            <div class="py-2.5 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-xs font-semibold text-white truncate">${c.name}</div>
+                <div class="text-[11px] text-zinc-400">${c.handle} • ${c.videosCount} videos</div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="text-xs font-bold text-emerald-400">₹${c.earning.toFixed(2)}</div>
+                <div class="text-[11px] text-zinc-400">${c.views} views</div>
+              </div>
+            </div>
+          `).join('')
+        : `<p class="text-xs text-zinc-500 py-4">No creators found.</p>`;
+    }
+
+    function renderVideosTable() {
+      const query = (document.getElementById('video-search-input')?.value || '').trim().toLowerCase();
+      const pMap = getProfileMap();
+      const tbody = document.getElementById('videos-table-body');
+
+      const filtered = allVideos.filter(v => {
+        const creator = (pMap[v.user_id]?.channel_name || '').toLowerCase();
+        return (v.title || '').toLowerCase().includes(query) || creator.includes(query);
+      });
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-zinc-500">No matching videos.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(v => {
+        const creator = pMap[v.user_id]?.channel_name || 'Creator';
+        const thumb = v.thumbnail_url
+          ? `<div class="w-16 aspect-video rounded-lg bg-cover bg-center shrink-0" style="background-image:url('${v.thumbnail_url}')"></div>`
+          : `<div class="w-16 aspect-video rounded-lg bg-admSec flex items-center justify-center text-zinc-500 shrink-0"><i class="fa-solid fa-play text-xs"></i></div>`;
+
+        return `
+          <tr class="hover:bg-admSec/40 transition">
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-3 max-w-xs">
+                ${thumb}
+                <span class="font-semibold text-white truncate">${v.title}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-zinc-300">${creator}</td>
+            <td class="py-3 px-4 text-zinc-200 font-semibold">${v.views || 0}</td>
+            <td class="py-3 px-4 text-zinc-300">${v.likes || 0}</td>
+            <td class="py-3 px-4 text-zinc-400">${timeAgo(v.created_at)}</td>
+            <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
+              <button onclick="previewVideo('${v.file_path}', '${v.title.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-lg bg-admSec hover:bg-zinc-700 text-zinc-200 font-semibold">
+                Play
+              </button>
+              <button onclick="adminDeleteVideo('${v.id}', '${v.file_path}')" class="px-2.5 py-1 rounded-lg bg-red-950/70 hover:bg-red-700 text-red-300 hover:text-white font-semibold">
+                Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function previewVideo(filePath, title) {
+      if (!filePath) return showToast('File path missing.');
+      const { data } = await sb.storage.from('Videos').createSignedUrl(filePath, 3600);
+      if (!data?.signedUrl) return showToast('Could not load video preview.');
+      document.getElementById('preview-video-title').textContent = title;
+      document.getElementById('preview-video-player').src = data.signedUrl;
+      document.getElementById('preview-modal').classList.remove('hidden');
+    }
+
+    function closePreviewModal() {
+      const player = document.getElementById('preview-video-player');
+      player.pause();
+      player.src = '';
+      document.getElementById('preview-modal').classList.add('hidden');
+    }
+
+    async function adminDeleteVideo(videoId, filePath) {
+      if (!confirm('Delete this video permanently?')) return;
+      const { error } = await sb.from('videos').delete().eq('id', videoId);
+      if (error) return showToast('Delete failed: ' + error.message);
+      if (filePath) await sb.storage.from('Videos').remove([filePath]);
+      showToast('Video deleted.');
+      await refreshAdminData();
+    }
+
+    function buildCreatorStats() {
+      const map = new Map();
+
+      allProfiles.forEach(p => {
+        map.set(p.user_id, {
+          userId: p.user_id,
+          name: p.channel_name || 'Creator',
+          handle: p.username || '@creator',
+          logoUrl: p.logo_url || '',
+          videosCount: 0,
+          views: 0,
+          subs: 0,
+          watchSec: 0,
+          earning: 0
+        });
+      });
+
+      allVideos.forEach(v => {
+        if (!map.has(v.user_id)) {
+          map.set(v.user_id, {
+            userId: v.user_id,
+            name: 'Creator',
+            handle: '@creator',
+            logoUrl: '',
+            videosCount: 0,
+            views: 0,
+            subs: 0,
+            watchSec: 0,
+            earning: 0
+          });
+        }
+        const entry = map.get(v.user_id);
+        entry.videosCount += 1;
+        entry.views += (v.views || 0);
+      });
+
+      allSubs.forEach(s => {
+        if (map.has(s.channel_id)) {
+          map.get(s.channel_id).subs += 1;
+        }
+      });
+
+      allAnalytics.forEach(e => {
+        if (e.event_type === 'watch_time' && map.has(e.channel_id)) {
+          map.get(e.channel_id).watchSec += (e.watch_seconds || 0);
+        }
+      });
+
+      const list = Array.from(map.values()).map(c => ({
+        ...c,
+        earning: calcEarning(c.views)
+      }));
+
+      list.sort((a, b) => b.views - a.views);
+      return list;
+    }
+
+    function renderCreatorsTable() {
+      const query = (document.getElementById('creator-search-input')?.value || '').trim().toLowerCase();
+      const tbody = document.getElementById('creators-table-body');
+      const stats = buildCreatorStats().filter(c =>
+        c.name.toLowerCase().includes(query) || c.handle.toLowerCase().includes(query)
+      );
+
+      if (!stats.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-zinc-500">No creators found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = stats.map(c => {
+        const avatar = c.logoUrl
+          ? `<div class="w-8 h-8 rounded-full bg-cover bg-center shrink-0" style="background-image:url('${c.logoUrl}')"></div>`
+          : `<div class="w-8 h-8 rounded-full bg-admRed text-white font-bold flex items-center justify-center shrink-0">${c.name.charAt(0).toUpperCase()}</div>`;
+
+        return `
+          <tr class="hover:bg-admSec/40 transition">
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2.5">
+                ${avatar}
+                <span class="font-semibold text-white">${c.name}</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-zinc-400">${c.handle}</td>
+            <td class="py-3 px-4 text-zinc-200">${c.videosCount}</td>
+            <td class="py-3 px-4 text-zinc-200">${c.subs}</td>
+            <td class="py-3 px-4 font-semibold text-white">${c.views}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderEarningsTable() {
+      const tbody = document.getElementById('earnings-table-body');
+      const stats = buildCreatorStats();
+
+      if (!stats.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-zinc-500">No earnings data available.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = stats.map(c => {
+        const isPaid = !!settledCreators[c.userId];
+        return `
+          <tr class="hover:bg-admSec/40 transition">
+            <td class="py-3 px-4">
+              <div class="font-semibold text-white">${c.name}</div>
+              <div class="text-[11px] text-zinc-400">${c.handle}</div>
+            </td>
+            <td class="py-3 px-4 text-zinc-200 font-semibold">${c.views}</td>
+            <td class="py-3 px-4 text-zinc-400">${formatWatchTime(c.watchSec)}</td>
+            <td class="py-3 px-4 font-bold text-emerald-400">₹${c.earning.toFixed(2)}</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${isPaid ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-300'}">
+                ${isPaid ? 'Paid' : 'Pending'}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="togglePayoutStatus('${c.userId}')" class="px-3 py-1 rounded-lg bg-admSec hover:bg-zinc-700 text-zinc-200 font-semibold">
+                ${isPaid ? 'Mark Pending' : 'Mark Paid'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateRpmRate() {
+      const val = parseFloat(document.getElementById('rpm-rate-input').value);
+      if (isNaN(val) || val < 0) return showToast('Enter a valid RPM value.');
+      rpmRate = val;
+      localStorage.setItem('xhub_admin_rpm', String(rpmRate));
+      renderOverview();
+      renderEarningsTable();
+      showToast(`RPM updated to ₹${rpmRate}`);
+    }
+
+    function togglePayoutStatus(userId) {
+      if (settledCreators[userId]) {
+        delete settledCreators[userId];
+      } else {
+        settledCreators[userId] = true;
+      }
+      localStorage.setItem('xhub_settled_creators', JSON.stringify(settledCreators));
+      renderEarningsTable();
+      showToast('Payout status updated.');
+    }
+
+    window.addEventListener('DOMContentLoaded', refreshAdminData);
+  </script>
 </body>
 </html>
